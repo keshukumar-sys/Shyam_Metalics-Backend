@@ -49,7 +49,7 @@ app.use("/stock", StockExchangeRouter);
 app.use("/investor-analyst", InvestorAnalystRouter);
 app.use("/investor-information", InvestorInformationRouter);
 app.use("/other", OtherRouter);
-
+// app.use("/blogs", require("./Routes/BlogRoute"));
 // =========================
 // Start server
 // =========================

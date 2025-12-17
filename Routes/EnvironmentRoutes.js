@@ -10,7 +10,7 @@ router.get("/en" ,(req , res)=>{
 });
 
 
-router.post("/create_environment" ,upload.single("detail_file"), createEnvironment);
+router.post("/create_environment" ,upload.single("file"), createEnvironment);
 router.get("/get_environment" , getEnvironment);
 
 module.exports = router;

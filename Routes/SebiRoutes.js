@@ -9,7 +9,7 @@ router.get('/s', (req, res) => {
 });
 
 // create sebi
-router.post("/add_sebi",upload.single(" sebi_file"), createSebi);
+router.post("/add_sebi",upload.single("sebi_file"), createSebi);
 
 // get all sebi details
 router.get("/get_sebi", getSebi);

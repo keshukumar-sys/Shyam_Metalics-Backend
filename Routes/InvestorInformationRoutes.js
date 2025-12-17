@@ -8,7 +8,7 @@ router.get("inInf" , (req , res)=>{
 });
 
 router.post("/add_investor_information",upload.single("file"), addInvestorInformationDetail);
-router.get("/get_investor_information",  getInvestorInformationDetails);
+router.get("/get_investor_information/:option",  getInvestorInformationDetails);
 
 
 module.exports = router;

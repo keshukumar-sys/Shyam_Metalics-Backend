@@ -10,7 +10,7 @@ router.get("/f", (req, res) => {
 });
 
 // Create familiar item
-router.post("/add_familiar",upload.single("familiar_file"), createFamiliar);
+router.post("/add_familiar",upload.single("file"), createFamiliar);
 
 // Get all familiar data
 router.get("/get_familiar", getFamiliar);

@@ -1,41 +1,83 @@
 const OtherModel = require("../Model/OtherModel");
 const uploadtoS3 = require("../config/s3Uploader");
 
-// Create a new Other entry
+
+
 const createOther = async (req, res) => {
   try {
-    const { option, details } = req.body;
+    let newOtherEntry;
 
-    if (!option || !details || !Array.isArray(details) || details.length === 0) {
-      return res.status(400).json({ message: "Option and details are required." });
+    const { option } = req.body;
+
+    if (!option) {
+      return res.status(400).json({ message: "Option is required" });
     }
 
-    // Handle file upload for each detail
-    const uploadedDetails = await Promise.all(details.map(async (item, index) => {
-      if (!item.name || !item.date) {
-        throw new Error(`Detail at index ${index} is missing name or date`);
+    // ===================== OTHER COMPLIANCES =====================
+    if (option === "Other Compliances") {
+      if (!req.body.details || !req.file) {
+        return res.status(400).json({
+          message: "Details and file are required for Other Compliances",
+        });
       }
 
-      let fileUrl = "";
-      if (req.files && req.files[index]) {
-        fileUrl = await uploadtoS3(req.files[index]);
-      } else if (item.file) {
-        // Optional: If file is sent as URL/base64 in body
-        fileUrl = item.file;
+      const parsedDetails = JSON.parse(req.body.details);
+
+      if (!parsedDetails.name || !parsedDetails.date) {
+        return res.status(400).json({
+          message: "Name and date are required",
+        });
       }
 
-      return {
-        ...item,
-        file: fileUrl
-      };
-    }));
+      const fileUrl = await uploadtoS3(req.file);
 
-    const newOther = await OtherModel.create({ option, details: uploadedDetails });
+      newOtherEntry = new OtherModel({
+        option,
+        details: {
+          ...parsedDetails,
+          file: fileUrl,
+        },
+      });
+    }
 
-    res.status(201).json({ message: "Other record created successfully", data: newOther });
+    // ===================== CONTACT DETAILS =====================
+    else if (
+      option === "KMP Contact Details" ||
+      option === "Investor Relations Contact"
+    ) {
+      const { details } = req.body;
+
+      if (!Array.isArray(details) || !details[0]?.contactInfo) {
+        return res.status(400).json({
+          message: "Contact details are required",
+        });
+      }
+
+      newOtherEntry = new OtherModel({
+        option,
+        details: {
+          ...details[0], // { contactInfo }
+        },
+      });
+    }
+
+    // ===================== INVALID OPTION =====================
+    else {
+      return res.status(400).json({ message: "Invalid option selected" });
+    }
+
+    await newOtherEntry.save();
+
+    res.status(201).json({
+      message: "Other entry created successfully",
+      data: newOtherEntry,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error creating Other entry:", error);
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
@@ -46,7 +88,7 @@ const getOtherDetails = async (req, res) => {
 
     const filter = option ? { option } : {};
 
-    const otherDetails = await OtherModel.find(filter).sort({ "details.date":-1 });
+    const otherDetails = await OtherModel.find(filter).sort({ "details.date": -1 });
     res.status(200).json({ data: otherDetails });
   } catch (error) {
     console.error(error);

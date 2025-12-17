@@ -46,7 +46,7 @@ const createInvestorAnalyst = async (req, res) => {
 const getInvestorAnalyst = async (req, res) => {
   try {
     const investorAnalystData = await InvestorAnalyst.findOne().sort({"investor_analyst_details.investor_analyst_date":-1});
-
+    console.log(investorAnalystData);
     if (!investorAnalystData) {
       return res.status(404).json({
         message: "No Investor/Analyst details found",

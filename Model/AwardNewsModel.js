@@ -7,9 +7,10 @@ const AwardNewsSchema = new mongoose.Schema({
     },
     category: {
         required: true,
-        enum: ['Leadership Recognition', 'Corporate Excellence', 'Employee Achievement', "Corporate Event", "Industry Leadership", "Wellness Event", "Safety Initiative", "CSR Initiative", "Training Program", "Manufacturing"],
+        enum: ['Leadership Recognition',  'Community Service', 'Corporate Excellence', 'Employee Achievement', "CSR Initiative", "Corporate Event", "Industry Leadership", "Wellness Event", "Safety Initiative", "CSR Initiative", "Training Program", "Manufacturing"],
         type: String,
     },
+    
     date: {
         required: true,
         type: Date,

@@ -18,15 +18,15 @@ const addFinancialDetail = async (req, res) => {
 
     // Save in DB
     const updatedFinancial = await FinancialModel.findOneAndUpdate(
-      { option }, 
-      { 
-        $push: { 
-          details: { 
-            name, 
-            date, 
+      { option },
+      {
+        $push: {
+          details: {
+            name,
+            date,
             file: fileUrl // save S3 URL
-          } 
-        } 
+          }
+        }
       },
       { new: true, upsert: true }
     );
@@ -50,8 +50,12 @@ const getFinancialDetails = async (req, res) => {
   const { option } = req.params;
 
   try {
-    const financialData = await FinancialModel.findOne({ option }).sort({"details.date":-1});
-
+    const financialData = await FinancialModel.findOne({ option }).sort({ "details.date": -1 });
+    console.log(financialData);
+    const updatedData = financialData.details.sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    ); 
+    
     if (!financialData) {
       return res.status(404).json({
         message: `No financial details found for ${option}`,
@@ -61,7 +65,7 @@ const getFinancialDetails = async (req, res) => {
 
     res.status(200).json({
       message: `${option} details fetched successfully`,
-      data: financialData.details,
+      data: updatedData,
     });
   } catch (error) {
     console.error("Error fetching financial details:", error);

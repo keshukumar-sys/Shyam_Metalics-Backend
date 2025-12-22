@@ -41,7 +41,18 @@ const AwardStoriesSchema = new mongoose.Schema({
             type:String,
             required:true,
         }
-    }
+    },
+    content:[
+        {
+            type:{
+                type:String,
+                default:"paragraph"
+            },
+            text:{
+                type:String
+            }
+        }
+    ]
 
 });
 module.exports = mongoose.model('AwardStories', AwardStoriesSchema);

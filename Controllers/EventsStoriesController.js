@@ -2,6 +2,7 @@ const uploadtoS3 = require("../config/s3Uploader");
 const EventStories = require("../Model/AwardStories");
 const createEventsStories = async (req, res) => {
     try {
+        console.log("hello welcome to crete the stories");
         console.log("HEADERS:", req.headers["content-type"]);
         console.log("Request Body:", req.body);
         console.log("Request File:", req.file);
@@ -9,35 +10,48 @@ const createEventsStories = async (req, res) => {
             return res.status(400).json({ message: "Request body is missing" });
         }
 
-        if (!req.file) {
-            return res.status(400).json({ message: "Image is required" });
-        }
-
-        const { name, slug, short_description, event_start_date, event_end_date, event_location, event_type} = req.body;
+        const { name, slug, short_description, event_start_date, event_end_date, event_location, event_type , content} = req.body;
         if (!name || !slug || !short_description || !event_start_date || !event_end_date || !event_location || !event_type) {
             return res.status(400).json({ message: "All fields are required" });
         }
-
+        console.log("After the validation");
         let parsedEventLocation;
-        let parsedEventType;    
+        let parsedEventType;
+        let parsedContent;
         try {
-            parsedEventLocation = JSON.parse(event_location);
-            parsedEventType = JSON.parse(event_type);
-            
-
+            parsedContent = JSON.parse(content);
         } catch {
             return res.status(400).json({ message: "Invalid content JSON" });
         }
+        try {
+            parsedEventLocation = typeof event_location === "string"
+                ? JSON.parse(event_location)
+                : event_location;
+
+            parsedEventType = typeof event_type === "string"
+                ? JSON.parse(event_type)
+                : event_type;
+
+        } catch (error) {
+            console.log(error);
+            return res.status(400).json({
+                message: "Invalid JSON format for event_location or event_type",
+                error: error.message
+            });
+        }
+
+        console.log("after the parsing")
         const imageUrl = await uploadtoS3(req.file, "event-news");
         const newEventStories = new EventStories({
             name,
             slug,
-            short_description,  
+            short_description,
             event_start_date,
             event_end_date,
             event_location: parsedEventLocation,
             event_type: parsedEventType,
-            front_image: {url:imageUrl}
+            front_image: { url: imageUrl },
+            content: parsedContent
         });
         await newEventStories.save();
         return res.status(201).json({

@@ -1,5 +1,5 @@
 const express = require("express");
-const { addFinancialDetail, getFinancialDetails } = require("../Controllers/FinancialContoller");
+const { addFinancialDetail, getFinancialDetails, deleteById } = require("../Controllers/FinancialContoller");
 const upload = require("../middleware/upload");
 const router = express.Router();
 
@@ -13,5 +13,6 @@ router.post("/add_detail",upload.single("file"), addFinancialDetail);
 
 // Get all financial details for a specific option
 router.get("/get_detail/:option", getFinancialDetails);
+router.delete("/delete" , deleteById);
 
 module.exports = router;

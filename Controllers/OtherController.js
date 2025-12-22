@@ -96,7 +96,24 @@ const getOtherDetails = async (req, res) => {
   }
 };
 
+const deleteById = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: "id is required" });
+
+    const parent = await OtherModel.findOne({ "details._id": id });
+    if (!parent) return res.status(404).json({ message: "Item not found" });
+
+    await OtherModel.updateOne({ _id: parent._id }, { $pull: { details: { _id: id } } });
+    return res.status(200).json({ message: "Item deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   createOther,
-  getOtherDetails
+  getOtherDetails,
+  deleteById,
 };

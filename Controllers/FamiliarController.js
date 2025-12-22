@@ -69,4 +69,18 @@ const getFamiliar = async (req, res) => {
   }
 };
 
-module.exports = { createFamiliar, getFamiliar };
+const deleteById = async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ message: "id is required" });
+  try {
+    const parent = await FamiliarModel.findOne({ "familiar_details._id": id });
+    if (!parent) return res.status(404).json({ message: "Item not found" });
+    await FamiliarModel.updateOne({ _id: parent._id }, { $pull: { familiar_details: { _id: id } } });
+    return res.status(200).json({ message: "Item deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { createFamiliar, getFamiliar, deleteById };

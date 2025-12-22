@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 
-const {createEnvironment , getEnvironment} = require("../Controllers/EnvironmentController");
+const { createEnvironment, getEnvironment, deleteById } = require("../Controllers/EnvironmentController");
 const upload = require("../middleware/upload");
 // testing emvironment route
 router.get("/en" ,(req , res)=>{
@@ -12,5 +12,5 @@ router.get("/en" ,(req , res)=>{
 
 router.post("/create_environment" ,upload.single("file"), createEnvironment);
 router.get("/get_environment" , getEnvironment);
-
+router.delete("/delete" , deleteById);
 module.exports = router;

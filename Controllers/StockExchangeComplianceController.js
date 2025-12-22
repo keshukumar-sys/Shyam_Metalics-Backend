@@ -62,4 +62,18 @@ const getComplianceDetails = async (req, res) => {
   }
 };
 
-module.exports = { addComplianceDetail, getComplianceDetails };
+const deleteById = async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ message: "id is required" });
+  try {
+    const parent = await StockExchangeComplianceModel.findOne({ "details._id": id });
+    if (!parent) return res.status(404).json({ message: "Item not found" });
+    await StockExchangeComplianceModel.updateOne({ _id: parent._id }, { $pull: { details: { _id: id } } });
+    return res.status(200).json({ message: "Item deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { addComplianceDetail, getComplianceDetails, deleteById };

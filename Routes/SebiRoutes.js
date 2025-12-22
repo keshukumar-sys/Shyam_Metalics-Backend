@@ -1,5 +1,5 @@
 const express = require("express");
-const { createSebi, getSebi } = require("../Controllers/SebiController");
+const { createSebi, getSebi, deleteById } = require("../Controllers/SebiController");
 const upload = require("../middleware/upload");
 const router = express.Router();
 
@@ -13,5 +13,5 @@ router.post("/add_sebi",upload.single("sebi_file"), createSebi);
 
 // get all sebi details
 router.get("/get_sebi", getSebi);
-
+router.delete("/delete" , deleteById);
 module.exports = router;

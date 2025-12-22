@@ -81,7 +81,21 @@ const getBlog = async (req, res) => {
     }
 };
 
-module.exports={
-    createBlog ,
-    getBlog
+const deleteById = async (req, res) => {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: "id is required" });
+    try {
+        const deleted = await BlogModel.findByIdAndDelete(id);
+        if (!deleted) return res.status(404).json({ message: "Item not found" });
+        return res.status(200).json({ message: "Item deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = {
+    createBlog,
+    getBlog,
+    deleteById,
 };

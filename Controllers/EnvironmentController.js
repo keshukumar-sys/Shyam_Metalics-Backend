@@ -72,7 +72,22 @@ const getEnvironment = async (req, res) => {
   }
 };
 
+const deleteById = async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ message: "id is required" });
+  try {
+    const parent = await EnvironmentModel.findOne({ "environment_detail._id": id });
+    if (!parent) return res.status(404).json({ message: "Item not found" });
+    await EnvironmentModel.updateOne({ _id: parent._id }, { $pull: { environment_detail: { _id: id } } });
+    return res.status(200).json({ message: "Item deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   createEnvironment,
   getEnvironment,
+  deleteById,
 };

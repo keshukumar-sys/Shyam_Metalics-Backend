@@ -4,6 +4,7 @@ const upload = require("../middleware/upload");
 const {
   createAwards,
   getAwards,
+  deleteById
 } = require("../Controllers/AwardController");
 
 // Test route
@@ -16,5 +17,6 @@ router.post("/create_awards", upload.single("image"), createAwards);
 
 // Get awards
 router.get("/get_awards", getAwards);
+router.delete("/delete" , deleteById);
 
 module.exports = router;

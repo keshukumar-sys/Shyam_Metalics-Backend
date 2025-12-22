@@ -1,5 +1,5 @@
 const express = require("express");
-const { createInvestorAnalyst, getInvestorAnalyst } = require("../Controllers/InvestorAnalystController");
+const { createInvestorAnalyst, getInvestorAnalyst, deleteById } = require("../Controllers/InvestorAnalystController");
 const upload = require("../middleware/upload");
 const router = express.Router();
 
@@ -13,5 +13,5 @@ router.post("/add_investor_analyst",upload.single("investor_analyst_file"), crea
 
 // Get all investor analyst details
 router.get("/get_investor_analyst", getInvestorAnalyst);
-
+router.delete("/delete" , deleteById);
 module.exports = router;

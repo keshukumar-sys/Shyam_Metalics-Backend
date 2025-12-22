@@ -1,5 +1,5 @@
 const express = require("express");
-const { createFamiliar, getFamiliar } = require("../Controllers/FamiliarController");
+const { createFamiliar, getFamiliar, deleteById } = require("../Controllers/FamiliarController");
 const upload = require("../middleware/upload");
 
 const router = express.Router();
@@ -14,5 +14,6 @@ router.post("/add_familiar",upload.single("file"), createFamiliar);
 
 // Get all familiar data
 router.get("/get_familiar", getFamiliar);
+router.delete("/delete" , deleteById);
 
 module.exports = router;

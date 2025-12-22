@@ -2,6 +2,7 @@ const express = require("express");
 const {
   addCorporateAnnouncement,
   getCorporateAnnouncement,
+  deleteById,
 } = require("../Controllers/CorporateAnnouncementController");
 const upload = require("../middleware/upload");
 
@@ -17,5 +18,5 @@ router.post("/add",upload.single("file"), addCorporateAnnouncement);
 
 // Get all announcement details for a specific option
 router.get("/get/:option", getCorporateAnnouncement);
-
+router.delete("/delete" , deleteById);
 module.exports = router;

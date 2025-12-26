@@ -67,10 +67,31 @@ app.use("/other", OtherRouter);
 app.use("/news", NewsRouter);
 app.use("/stories", StoriesRouter);
 app.use("/blog", blogRouter);
-app.use("/disclosure" , DisclosureRoute);
-app.use("/award",AwardRouter);
+app.use("/disclosure", DisclosureRoute);
+app.use("/award", AwardRouter);
+app.use("/extra", require("./Routes/uploadRoute"));
 
 
+// app.get("/stock", async (req, res) => {
+//     try {
+//         const response = await fetch(
+//             "https://www.nseindia.com/api/quote-equity?symbol=SHYAMMETL",
+//             {
+//                 headers: {
+//                     "User-Agent": "Mozilla/5.0",
+//                     "Accept": "application/json",
+//                     "Accept-Language": "en-US,en;q=0.9",
+//                     "Referer": "https://www.nseindia.com/"
+//                 }
+//             }
+//         );
+
+//         const data = await response.json();
+//         res.json(data);
+//     } catch (err) {
+//         res.status(500).json({ error: "Failed to fetch stock data" });
+//     }
+// });
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
     try {

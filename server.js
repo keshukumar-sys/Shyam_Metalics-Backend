@@ -52,6 +52,9 @@ const StoriesRouter = require("./Routes/EventStoriesRoute");
 const blogRouter = require("./Routes/BlogRoute");
 const DisclosureRoute = require("./Routes/DisclosuresRoute");
 const AwardRouter = require("./Routes/AwardRoute");
+const AuthRouter = require("./Routes/AuthRoutes");
+const { authMiddleware } = require("./middleware/auth");
+const User = require("./Model/UserModel");
 app.get("/", (req, res) => {
     res.send("Hello! Backend of Shyam Metalics is running.");
 });
@@ -78,6 +81,12 @@ app.use("/blog", blogRouter);
 app.use("/disclosure", DisclosureRoute);
 app.use("/award", AwardRouter);
 app.use("/extra", require("./Routes/uploadRoute"));
+
+// auth routes (login, create uploader)
+app.use("/auth", AuthRouter);
+
+// global auth middleware: allow GETs freely; require token for POST/PUT/DELETE
+app.use(authMiddleware);
 
 
 // app.get("/stock", async (req, res) => {
@@ -174,6 +183,20 @@ app.listen(PORT, async () => {
         await mongoose.connect(process.env.MONGO_URL);
         console.log("connected to the db successfully");
         console.log("app is listening at port", process.env.PORT);
+        // ensure default admin user exists
+        try {
+          const adminEmail = "shyammetalics@admin.com";
+          const adminPassword = "pass-12345678";
+          const existing = await User.findOne({ email: adminEmail });
+          if (!existing) {
+            await User.create({ email: adminEmail, password: adminPassword, role: "admin" });
+            console.log("Default admin created:", adminEmail);
+          } else {
+            console.log("Admin already exists:", adminEmail);
+          }
+        } catch (e) {
+          console.warn("Failed to ensure default admin:", e && e.message);
+        }
     } catch (error) {
         console.log("somethign wrong happend ", error);
     }

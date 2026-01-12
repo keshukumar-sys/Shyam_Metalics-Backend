@@ -1,7 +1,7 @@
 const uploadtoS3 = require("../config/s3Uploader");
 const BlogModel = require("../Model/BlogModel");
 const createBlog = async (req, res) => {
-    console.log("Hello welcoming you to the blog creating function...");
+
     console.log("destructuring the req.body to verify we have everythign for the blog creation");
     const { title, date, link, meta, excerpt, paragraph, faqs } = req.body;
 

@@ -35,10 +35,10 @@ const createAwards = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        console.error('Create award error:', error && error.message);
         return res.status(500).json({
             message: "somethign went wrong",
-            error: error
+            error: error && error.message
         })
     }
 }
@@ -57,10 +57,10 @@ const getAwards = async (req, res) => {
             award: awards
         });
     } catch (error) {
-        console.log(error);
+        console.error('Get awards error:', error && error.message);
         return res.status(500).json({
             message: "somethign went wrong",
-            error: error
+            error: error && error.message
         })
     }
 }

@@ -1,120 +1,87 @@
-//const express = require('express');
-const mongoose = require('mongoose');
-//const app = express();
-const path = require('path');
-require("dotenv").config();
-const cors = require('cors');
 const express = require("express");
+const mongoose = require("mongoose");
+const path = require("path");
+const cors = require("cors");
+require("dotenv").config();
+
 const YahooFinance = require("yahoo-finance2").default;
+const yahooFinance = new YahooFinance();
+
+const activityLogger = require("./middleware/activityLogger");
+const { authMiddleware } = require("./middleware/auth");
+const User = require("./Model/UserModel");
 
 const app = express();
 
-// ✅ create ONE instance, ONE time
-const yahooFinance = new YahooFinance();
+/* =========================================================
+   ✅ GLOBAL MIDDLEWARE (SAFE ORDER)
+========================================================= */
 
-// Middleware
+// Body parsers (DO NOT SKIP multipart here ❗)
+app.use(express.json({ limit: "3mb" }));
+app.use(express.urlencoded({ extended: true, limit: "3mb" }));
 
-app.use((req, res, next) => {
-    if (req.is("multipart/form-data")) {
-        return next(); // 🚀 skip body parsing
-    }
-    express.json({ limit: "3mb" })(req, res, next);
-});
+// CORS
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.use((req, res, next) => {
-    if (req.is("multipart/form-data")) {
-        return next(); // 🚀 skip body parsing
-    }
-    express.urlencoded({ extended: true, limit: "3mb" })(req, res, next);
-});
+// ✅ Activity Logger (UPLOAD SAFE)
+app.use(activityLogger);
 
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}))
+/* =========================================================
+   ✅ BASIC ROUTES
+========================================================= */
 
-
-// Importing routes
-const Policyrouter = require("./Routes/PolicyRoutes");
-const EnvironmentRouter = require("./Routes/EnvironmentRoutes");
-const TdsRouter = require("./Routes/TdsRoutes");
-const SebiRouter = require("./Routes/SebiRoutes");
-const FamiliarRouter = require("./Routes/FamiliarRoutes");
-const FinancialRouter = require("./Routes/FinancialRoutes");
-const CorporateRouter = require("./Routes/CorporateAnnouncementRoutes");
-const StockExchangeRouter = require("./Routes/StockExchangeComplianceRoutes");
-const InvestorAnalystRouter = require("./Routes/InvestorAnalystRoutes");
-const InvestorInformationRouter = require("./Routes/InvestorInformationRoutes");
-const OtherRouter = require("./Routes/OtherRoutes");
-const NewsRouter = require("./Routes/EventNewsRoute");
-const StoriesRouter = require("./Routes/EventStoriesRoute");
-const blogRouter = require("./Routes/BlogRoute");
-const DisclosureRoute = require("./Routes/DisclosuresRoute");
-const AwardRouter = require("./Routes/AwardRoute");
-const AuthRouter = require("./Routes/AuthRoutes");
-const { authMiddleware } = require("./middleware/auth");
-const User = require("./Model/UserModel");
 app.get("/", (req, res) => {
-    res.send("Hello! Backend of Shyam Metalics is running.");
+  res.send("✅ Backend of Shyam Metalics is running");
 });
-
 
 app.get("/hello", (req, res) => {
-    res.status(200).send("Hello World from Backend");
+  res.status(200).send("Hello World from Backend");
 });
 
-app.use("/policy", Policyrouter);
-app.use("/environment", EnvironmentRouter);
-app.use("/tds", TdsRouter);
-app.use("/sebi", SebiRouter);
-app.use("/familiar", FamiliarRouter);
-app.use("/financial", FinancialRouter);
-app.use("/corporate", CorporateRouter);
-app.use("/stock", StockExchangeRouter);
-app.use("/investor-analyst", InvestorAnalystRouter);
-app.use("/investor-information", InvestorInformationRouter);
-app.use("/other", OtherRouter);
-app.use("/news", NewsRouter);
-app.use("/stories", StoriesRouter);
-app.use("/blog", blogRouter);
-app.use("/disclosure", DisclosureRoute);
-app.use("/award", AwardRouter);
+/* =========================================================
+   ✅ IMPORT ROUTES
+========================================================= */
+
+app.use("/policy", require("./Routes/PolicyRoutes"));
+app.use("/environment", require("./Routes/EnvironmentRoutes"));
+app.use("/tds", require("./Routes/TdsRoutes"));
+app.use("/sebi", require("./Routes/SebiRoutes"));
+app.use("/familiar", require("./Routes/FamiliarRoutes"));
+app.use("/financial", require("./Routes/FinancialRoutes"));
+app.use("/corporate", require("./Routes/CorporateAnnouncementRoutes"));
+app.use("/stock", require("./Routes/StockExchangeComplianceRoutes"));
+app.use("/investor-analyst", require("./Routes/InvestorAnalystRoutes"));
+app.use("/investor-information", require("./Routes/InvestorInformationRoutes"));
+app.use("/other", require("./Routes/OtherRoutes"));
+app.use("/news", require("./Routes/EventNewsRoute"));
+app.use("/stories", require("./Routes/EventStoriesRoute"));
+app.use("/blog", require("./Routes/BlogRoute"));
+app.use("/disclosure", require("./Routes/DisclosuresRoute"));
+app.use("/award", require("./Routes/AwardRoute"));
+
+// ✅ Upload routes (multer lives INSIDE these routes)
 app.use("/extra", require("./Routes/uploadRoute"));
 
-// auth routes (login, create uploader)
-app.use("/auth", AuthRouter);
+// Auth & Logs
+app.use("/auth", require("./Routes/AuthRoutes"));
+app.use("/logs", require("./Routes/ActivityLogRoute"));
 
-// global auth middleware: allow GETs freely; require token for POST/PUT/DELETE
+/* =========================================================
+   ✅ AUTH MIDDLEWARE (POST / PUT / DELETE protected)
+========================================================= */
+
 app.use(authMiddleware);
 
-
-// app.get("/stock", async (req, res) => {
-//     try {
-//         const response = await fetch(
-//             "https://www.nseindia.com/api/quote-equity?symbol=SHYAMMETL",
-//             {
-//                 headers: {
-//                     "User-Agent": "Mozilla/5.0",
-//                     "Accept": "application/json",
-//                     "Accept-Language": "en-US,en;q=0.9",
-//                     "Referer": "https://www.nseindia.com/"
-//                 }
-//             }
-//         );
-
-//         const data = await response.json();
-//         res.json(data);
-//     } catch (err) {
-//         res.status(500).json({ error: "Failed to fetch stock data" });
-//     }
-// });
-
-
-
-
-const cache = new Map();
-const TTL = 30 * 1000;
+/* =========================================================
+   ✅ STOCK API (Yahoo Finance)
+========================================================= */
 
 app.get("/stock", async (req, res) => {
   try {
@@ -126,7 +93,6 @@ app.get("/stock", async (req, res) => {
     const nseSymbol = `${baseSymbol}.NS`;
     const bseSymbol = `${baseSymbol}.BO`;
 
-    // Fetch both in parallel
     const [nseQuote, bseQuote] = await Promise.all([
       yahooFinance.quote(nseSymbol).catch(() => null),
       yahooFinance.quote(bseSymbol).catch(() => null),
@@ -134,7 +100,6 @@ app.get("/stock", async (req, res) => {
 
     res.json({
       status: "success",
-
       nse: nseQuote
         ? {
             symbol: nseQuote.symbol,
@@ -147,7 +112,6 @@ app.get("/stock", async (req, res) => {
             changePercent: nseQuote.regularMarketChangePercent,
           }
         : null,
-
       bse: bseQuote
         ? {
             symbol: bseQuote.symbol,
@@ -167,37 +131,34 @@ app.get("/stock", async (req, res) => {
   }
 });
 
+/* =========================================================
+   ✅ SERVER START (ONLY ONE LISTEN 🔥)
+========================================================= */
 
+const PORT = process.env.PORT || 3002;
 
-
-
-app.listen(3002, () => {
-  console.log("App is listening at port 3002");
-});
-
-
-
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URL);
-        console.log("connected to the db successfully");
-        console.log("app is listening at port", process.env.PORT);
-        // ensure default admin user exists
-        try {
-          const adminEmail = "shyammetalics@admin.com";
-          const adminPassword = "pass-12345678";
-          const existing = await User.findOne({ email: adminEmail });
-          if (!existing) {
-            await User.create({ email: adminEmail, password: adminPassword, role: "admin" });
-            console.log("Default admin created:", adminEmail);
-          } else {
-            console.log("Admin already exists:", adminEmail);
-          }
-        } catch (e) {
-          console.warn("Failed to ensure default admin:", e && e.message);
-        }
-    } catch (error) {
-        console.log("somethign wrong happend ", error);
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("✅ MongoDB connected");
+    console.log(`🚀 Server running on port ${PORT}`);
+
+    // Ensure default admin
+    const adminEmail = "shyammetalics@admin.com";
+    const adminPassword = "pass-12345678";
+
+    const exists = await User.findOne({ email: adminEmail });
+    if (!exists) {
+      await User.create({
+        email: adminEmail,
+        password: adminPassword,
+        role: "admin",
+      });
+      console.log("✅ Default admin created");
+    } else {
+      console.log("ℹ️ Admin already exists");
     }
+  } catch (error) {
+    console.error("❌ Startup error:", error);
+  }
 });

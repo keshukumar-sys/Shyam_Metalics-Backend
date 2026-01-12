@@ -51,7 +51,6 @@ const getFinancialDetails = async (req, res) => {
 
   try {
     const financialData = await FinancialModel.findOne({ option }).sort({ "details.date": -1 });
-    console.log(financialData);
     const updatedData = financialData.details.sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     ); 

@@ -4,7 +4,30 @@ const User = require("../Model/UserModel");
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 
 const authMiddleware = async (req, res, next) => {
+  // Dev-only: allow unauthenticated POST to /logs/public-test-create so we can verify logging easily
+  if (process.env.NODE_ENV !== 'production' && req.method === 'POST' && req.path && req.path.startsWith('/logs/public-test-create')) {
+    console.info('Auth bypass: allowing dev public-test-create without token');
+    return next();
+  }
+
   if (req.method === "GET") return next(); // GET requests are free
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "Authorization required" });
+  const token = authHeader.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Invalid authorization format" });
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(payload.id);
+    if (!user) return res.status(401).json({ error: "User not found" });
+    req.user = user;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+};
+
+// Strict auth that enforces a valid token for all methods (including GET)
+const authRequired = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: "Authorization required" });
   const token = authHeader.split(" ")[1];
@@ -26,4 +49,4 @@ const requireRole = (roles = []) => (req, res, next) => {
   next();
 };
 
-module.exports = { authMiddleware, requireRole };
+module.exports = { authMiddleware, authRequired, requireRole };

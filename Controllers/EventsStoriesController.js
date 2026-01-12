@@ -2,10 +2,6 @@ const uploadtoS3 = require("../config/s3Uploader");
 const EventStories = require("../Model/AwardStories");
 const createEventsStories = async (req, res) => {
     try {
-        console.log("hello welcome to crete the stories");
-        console.log("HEADERS:", req.headers["content-type"]);
-        console.log("Request Body:", req.body);
-        console.log("Request File:", req.file);
         if (!req.body) {
             return res.status(400).json({ message: "Request body is missing" });
         }
@@ -14,7 +10,6 @@ const createEventsStories = async (req, res) => {
         if (!name || !slug || !short_description || !event_start_date || !event_end_date || !event_location || !event_type) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        console.log("After the validation");
         let parsedEventLocation;
         let parsedEventType;
         let parsedContent;
@@ -33,14 +28,13 @@ const createEventsStories = async (req, res) => {
                 : event_type;
 
         } catch (error) {
-            console.log(error);
+            console.error('EventsStoriesController error:', error && error.message);
             return res.status(400).json({
                 message: "Invalid JSON format for event_location or event_type",
                 error: error.message
             });
         }
 
-        console.log("after the parsing")
         const imageUrl = await uploadtoS3(req.file, "event-news");
         const newEventStories = new EventStories({
             name,

@@ -1,9 +1,17 @@
-const express = require('express');
+//const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
+//const app = express();
 const path = require('path');
 require("dotenv").config();
 const cors = require('cors');
+const express = require("express");
+const YahooFinance = require("yahoo-finance2").default;
+
+const app = express();
+
+// ✅ create ONE instance, ONE time
+const yahooFinance = new YahooFinance();
+
 // Middleware
 
 app.use((req, res, next) => {
@@ -92,6 +100,93 @@ app.use("/extra", require("./Routes/uploadRoute"));
 //         res.status(500).json({ error: "Failed to fetch stock data" });
 //     }
 // });
+
+
+
+
+
+const cache = new Map();
+const TTL = 30 * 1000; // 30 seconds
+
+app.get("/stock", async (req, res) => {
+  try {
+    const baseSymbol = req.query.symbol;
+    if (!baseSymbol) {
+      return res.status(400).json({ error: "symbol is required" });
+    }
+
+    const cacheKey = baseSymbol.toUpperCase();
+    const cached = cache.get(cacheKey);
+
+    // ✅ Serve from cache if valid
+    if (cached && Date.now() - cached.time < TTL) {
+      return res.json(cached.data);
+    }
+
+    const nseSymbol = `${cacheKey}.NS`;
+    const bseSymbol = `${cacheKey}.BO`;
+
+    const [nseQuote, bseQuote] = await Promise.all([
+      yahooFinance.quote(nseSymbol).catch(() => null),
+      yahooFinance.quote(bseSymbol).catch(() => null),
+    ]);
+
+    const responseData = {
+      status: "success",
+
+      nse:
+        nseQuote && nseQuote.regularMarketPrice != null
+          ? {
+              symbol: nseQuote.symbol,
+              shortName: nseQuote.shortName,
+              currentPrice: nseQuote.regularMarketPrice,
+              high: nseQuote.regularMarketDayHigh,
+              low: nseQuote.regularMarketDayLow,
+              prevClose: nseQuote.regularMarketPreviousClose,
+              change: nseQuote.regularMarketChange,
+              changePercent: nseQuote.regularMarketChangePercent,
+            }
+          : null,
+
+      bse:
+        bseQuote && bseQuote.regularMarketPrice != null
+          ? {
+              symbol: bseQuote.symbol,
+              shortName: bseQuote.shortName,
+              currentPrice: bseQuote.regularMarketPrice,
+              high: bseQuote.regularMarketDayHigh,
+              low: bseQuote.regularMarketDayLow,
+              prevClose: bseQuote.regularMarketPreviousClose,
+              change: bseQuote.regularMarketChange,
+              changePercent: bseQuote.regularMarketChangePercent,
+            }
+          : null,
+    };
+
+    // ✅ Store in cache
+    cache.set(cacheKey, {
+      data: responseData,
+      time: Date.now(),
+    });
+
+    res.json(responseData);
+  } catch (err) {
+    console.error("Stock API error:", err);
+    res.status(500).json({ error: "Failed to fetch stock data" });
+  }
+});
+
+
+
+
+
+
+app.listen(3002, () => {
+  console.log("App is listening at port 3002");
+});
+
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
     try {

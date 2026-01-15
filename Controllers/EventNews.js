@@ -70,7 +70,7 @@ module.exports = {
 }
 
 const deleteById = async (req, res) => {
-    const { id } = req.body;
+    const id = req.body.id || req.params.id;
     if (!id) return res.status(400).json({ message: "id is required" });
     try {
         const deleted = await EventNews.findByIdAndDelete(id);
@@ -82,4 +82,59 @@ const deleteById = async (req, res) => {
     }
 };
 
+const updateEventNews = async (req, res) => {
+    const { id } = req.params;
+    const { slug, category, date, title, description, content } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: "Event News id is required" });
+    }
+
+    try {
+        const eventNews = await EventNews.findById(id);
+        if (!eventNews) {
+            return res.status(404).json({ message: "Event News not found" });
+        }
+
+        // Parse content JSON safely
+        if (content) {
+            try {
+                eventNews.content = typeof content === "string" ? JSON.parse(content) : content;
+            } catch {
+                return res.status(400).json({ message: "Invalid content JSON" });
+            }
+        }
+
+        // Upload new image if provided
+        if (req.file) {
+            const imageUrl = await uploadtoS3(req.file, "event-news");
+            if (!imageUrl) {
+                return res.status(500).json({ message: "Image upload failed" });
+            }
+            eventNews.image = imageUrl;
+        }
+
+        // Update basic fields
+        if (slug) eventNews.slug = slug;
+        if (category) eventNews.category = category;
+        if (date) eventNews.date = date;
+        if (title) eventNews.title = title;
+        if (description) eventNews.description = description;
+
+        const updatedEventNews = await eventNews.save();
+
+        return res.status(200).json({
+            message: "Event News updated successfully",
+            data: updatedEventNews
+        });
+
+    } catch (error) {
+        console.error("Update Event News error:", error);
+        return res.status(500).json({
+            message: "Server Error",
+            error: error.message
+        });
+    }
+};
+module.exports.updateEventNews = updateEventNews;
 module.exports.deleteById = deleteById;

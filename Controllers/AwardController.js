@@ -87,8 +87,52 @@ const deleteById = async (req, res) => {
         });
     }
 };
+const updateAward = async (req, res) => {
+    const { id } = req.params;
+    const { category, title, description } = req.body;
+
+    try {
+        const award = await Award.findById(id);
+        if (!award) {
+            return res.status(404).json({
+                message: "Award not found",
+            });
+        }
+
+        // If new image is uploaded, update it
+        if (req.file) {
+            const image = await uploadtoS3(req.file, "awards");
+            if (!image) {
+                return res.status(400).json({
+                    message: "Image upload failed, please try again",
+                });
+            }
+            award.image = image;
+        }
+
+        // Update fields if provided
+        if (category) award.category = category;
+        if (title) award.title = title;
+        if (description) award.description = description;
+
+        const updatedAward = await award.save();
+
+        return res.status(200).json({
+            message: "Award updated successfully",
+            item: updatedAward,
+        });
+
+    } catch (error) {
+        console.error("Update award error:", error && error.message);
+        return res.status(500).json({
+            message: "Something went wrong",
+            error: error && error.message,
+        });
+    }
+};
+
 
 module.exports = {
     createAwards,
-    getAwards, deleteById
+    getAwards, deleteById , updateAward
 }

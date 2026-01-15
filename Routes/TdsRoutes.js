@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 
-const {createTds, getTds , deleteById} = require("../Controllers/TdsContoller");
+const {createTds, getTds , deleteById , updateTdsById} = require("../Controllers/TdsContoller");
 const upload = require("../middleware/upload");
 // testing tds routes
 router.get('tds' , (req,res)=>{
@@ -12,5 +12,6 @@ router.get('tds' , (req,res)=>{
 router.post("/create_tds" ,upload.single("tds_file"),  createTds);
 router.get("/get_tds" , getTds);
 router.delete("/delete" , deleteById);
+router.put("/update_tds/:id", upload.single("tds_file"), updateTdsById);
 
 module.exports = router;

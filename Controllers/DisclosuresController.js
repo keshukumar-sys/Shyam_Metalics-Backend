@@ -75,8 +75,68 @@ const deleteById = async (req, res) => {
   }
 };
 
+const updateDisclosures = async (req, res) => {
+  const { id } = req.params;
+  const { name, date } = req.body;
+
+  if (!id) {
+    return res.status(400).json({
+      message: "detail id is required",
+    });
+  }
+
+  try {
+    // Find parent document containing this detail
+    const parent = await DisclosuresModel.findOne({
+      "detail._id": id,
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        message: "Disclosures item not found",
+      });
+    }
+
+    // Build update object
+    const updateFields = {};
+    if (name) updateFields["detail.$.name"] = name;
+    if (date) updateFields["detail.$.date"] = date;
+
+    // Upload new file if provided
+    if (req.file) {
+      const url = await uploadToS3(req.file, "diclosures");
+      if (!url) {
+        return res.status(500).json({
+          message: "File upload failed",
+        });
+      }
+      updateFields["detail.$.file"] = url;
+    }
+
+    const updated = await DisclosuresModel.findOneAndUpdate(
+      { "detail._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Disclosures updated successfully",
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error("Error updating Disclosures:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   createDisclosures,
   getDisclosures,
   deleteById,
+  updateDisclosures
 };

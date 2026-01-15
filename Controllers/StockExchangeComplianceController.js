@@ -75,5 +75,43 @@ const deleteById = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+const updateComplianceById = async (req, res) => {
+  try {
+    const { id } = req.params; // compliance detail _id
+    const { name, date } = req.body;
 
-module.exports = { addComplianceDetail, getComplianceDetails, deleteById };
+    if (!id) return res.status(400).json({ message: "id is required" });
+
+    const parent = await StockExchangeComplianceModel.findOne({ "details._id": id });
+    if (!parent) return res.status(404).json({ message: "Compliance detail not found" });
+
+    const updateFields = {};
+
+    if (name) updateFields["details.$.name"] = name;
+    if (date) updateFields["details.$.date"] = date;
+    if (req.file) {
+      const fileUrl = await uploadtoS3(req.file);
+      updateFields["details.$.file"] = fileUrl;
+    }
+
+    const updatedCompliance = await StockExchangeComplianceModel.findOneAndUpdate(
+      { "details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Compliance detail updated successfully",
+      data: updatedCompliance,
+    });
+
+  } catch (error) {
+    console.error("Error updating compliance detail:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { addComplianceDetail, getComplianceDetails, deleteById, updateComplianceById };

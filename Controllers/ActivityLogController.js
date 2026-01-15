@@ -53,3 +53,20 @@ exports.deleteLog = async (req, res) => {
     res.status(500).json({ status: 'error' });
   }
 };
+exports.deleteAllLogs = async (req, res) => {
+  try {
+    const result = await ActivityLog.deleteMany({});
+
+    res.json({
+      status: 'success',
+      message: 'All activity logs deleted successfully',
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Error deleting all logs:', error && error.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete all logs',
+    });
+  }
+};

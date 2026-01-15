@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const {addInvestorInformationDetail, getInvestorInformationDetails, deleteById } = require("../Controllers/InvestorInformationController");
+const {addInvestorInformationDetail, getInvestorInformationDetails, deleteById , updateInvestorInformationDetail} = require("../Controllers/InvestorInformationController");
 const upload = require("../middleware/upload");
 // testing route
 router.get("inInf" , (req , res)=>{
@@ -10,5 +10,6 @@ router.get("inInf" , (req , res)=>{
 router.post("/add_investor_information",upload.single("file"), addInvestorInformationDetail);
 router.get("/get_investor_information/:option",  getInvestorInformationDetails);
 router.delete("/delete" , deleteById);
+router.put("/update_investor_information/:id", upload.single("file"), updateInvestorInformationDetail);
 
 module.exports = router;

@@ -74,10 +74,48 @@ async function deleteById(req, res) {
   }
 }
 
+const updateTdsById = async (req, res) => {
+  try {
+    const { id } = req.params; // _id of the tds_detail
+    const { tds_name, tds_date } = req.body;
+
+    if (!id) return res.status(400).json({ message: "id is required" });
+
+    const parent = await TdsModel.findOne({ "tds_details._id": id });
+    if (!parent) return res.status(404).json({ message: "TDS detail not found" });
+
+    const updateFields = {};
+
+    if (tds_name) updateFields["tds_details.$.tds_name"] = tds_name;
+    if (tds_date) updateFields["tds_details.$.tds_date"] = tds_date;
+    if (req.file) {
+      const fileUrl = await uploadToS3(req.file, "tds");
+      updateFields["tds_details.$.tds_file"] = fileUrl;
+    }
+
+    const updatedTds = await TdsModel.findOneAndUpdate(
+      { "tds_details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "TDS detail updated successfully",
+      data: updatedTds,
+    });
+  } catch (error) {
+    console.error("Error updating TDS detail:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   createTds,
   getTds,
-  deleteById
+  deleteById,
+  updateTdsById
 }
 

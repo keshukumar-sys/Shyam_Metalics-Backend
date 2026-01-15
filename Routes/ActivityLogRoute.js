@@ -30,6 +30,14 @@ router.post('/test-create', authRequired, requireRole(['admin','uploader']), asy
     return res.status(500).json({ status: 'error', message: 'Server error' });
   }
 });
+// Delete ALL logs (ADMIN ONLY)
+router.delete(
+  '/delete-all',
+  authRequired,
+  requireRole(['admin']),
+  ActivityLogController.deleteAllLogs
+);
+
 
 // Authenticated test endpoint (admin/uploader) - creates a log using controller method
 router.post('/test-create', authMiddleware, async (req, res) => {

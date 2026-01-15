@@ -86,8 +86,68 @@ const deleteById = async (req, res) => {
   }
 };
 
+
+const updateEnvironment = async (req, res) => {
+  const { id } = req.params;
+  const { detail_name, detail_date } = req.body;
+
+  if (!id) {
+    return res.status(400).json({
+      message: "detail id is required",
+    });
+  }
+
+  try {
+    // Find parent document that contains this detail
+    const parent = await EnvironmentModel.findOne({
+      "environment_detail._id": id,
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        message: "Environment item not found",
+      });
+    }
+
+    // Build update object
+    const updateFields = {};
+    if (detail_name) updateFields["environment_detail.$.detail_name"] = detail_name;
+    if (detail_date) updateFields["environment_detail.$.detail_date"] = detail_date;
+
+    // Upload new file if provided
+    if (req.file) {
+      const fileUrl = await uploadtoS3(req.file);
+      if (!fileUrl) {
+        return res.status(500).json({
+          message: "File upload failed",
+        });
+      }
+      updateFields["environment_detail.$.detail_file"] = fileUrl;
+    }
+
+    const updated = await EnvironmentModel.findOneAndUpdate(
+      { "environment_detail._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Environment updated successfully",
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error("Error updating environment:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createEnvironment,
   getEnvironment,
   deleteById,
+  updateEnvironment
 };

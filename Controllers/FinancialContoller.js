@@ -50,17 +50,18 @@ const getFinancialDetails = async (req, res) => {
   const { option } = req.params;
 
   try {
-    const financialData = await FinancialModel.findOne({ option }).sort({ "details.date": -1 });
-    const updatedData = financialData.details.sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    ); 
+    const financialData = await FinancialModel.findOne({ option });
     
-    if (!financialData) {
+    if (!financialData || !financialData.details || financialData.details.length === 0) {
       return res.status(404).json({
         message: `No financial details found for ${option}`,
         data: [],
       });
     }
+
+    const updatedData = financialData.details.sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
 
     res.status(200).json({
       message: `${option} details fetched successfully`,
@@ -89,4 +90,63 @@ const deleteById = async (req, res) => {
   }
 };
 
-module.exports = { addFinancialDetail, getFinancialDetails, deleteById };
+
+const updateFinancialDetail = async (req, res) => {
+  const { id } = req.params;
+  const { name, date } = req.body;
+
+  if (!id) {
+    return res.status(400).json({
+      message: "detail id is required",
+    });
+  }
+
+  try {
+    // Find parent document containing this detail
+    const parent = await FinancialModel.findOne({
+      "details._id": id,
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        message: "Financial detail not found",
+      });
+    }
+
+    // Build update object
+    const updateFields = {};
+    if (name) updateFields["details.$.name"] = name;
+    if (date) updateFields["details.$.date"] = date;
+
+    // Upload new file if provided
+    if (req.file) {
+      const fileUrl = await uploadtoS3(req.file);
+      if (!fileUrl) {
+        return res.status(500).json({
+          message: "File upload failed",
+        });
+      }
+      updateFields["details.$.file"] = fileUrl;
+    }
+
+    const updated = await FinancialModel.findOneAndUpdate(
+      { "details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Financial detail updated successfully",
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error("Error updating financial detail:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { addFinancialDetail, getFinancialDetails, deleteById, updateFinancialDetail };

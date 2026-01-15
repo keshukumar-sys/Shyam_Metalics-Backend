@@ -79,5 +79,52 @@ const deleteById = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+const updateSebiById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sebi_name, sebi_date } = req.body;
 
-module.exports = { createSebi, getSebi, deleteById };
+    if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+
+    const parent = await sebiModel.findOne({ "sebi_details._id": id });
+    if (!parent) {
+      return res.status(404).json({ message: "SEBI entry not found" });
+    }
+
+    const updateFields = {};
+
+    if (sebi_name) {
+      updateFields["sebi_details.$.sebi_name"] = sebi_name;
+    }
+
+    if (sebi_date) {
+      updateFields["sebi_details.$.sebi_date"] = sebi_date;
+    }
+
+    if (req.file) {
+      const fileUrl = await uploadtoS3(req.file);
+      updateFields["sebi_details.$.sebi_file"] = fileUrl;
+    }
+
+    const updatedSebi = await sebiModel.findOneAndUpdate(
+      { "sebi_details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "SEBI data updated successfully",
+      data: updatedSebi,
+    });
+  } catch (error) {
+    console.error("Error updating SEBI:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { createSebi, getSebi, deleteById, updateSebiById };

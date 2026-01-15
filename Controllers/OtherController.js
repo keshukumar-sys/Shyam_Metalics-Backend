@@ -112,8 +112,88 @@ const deleteById = async (req, res) => {
   }
 };
 
+const updateOtherById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { option } = req.body;
+
+    if (!id || !option) {
+      return res.status(400).json({
+        message: "id and option are required",
+      });
+    }
+
+    const parent = await OtherModel.findOne({ "details._id": id });
+    if (!parent) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    const updateFields = {};
+
+    // ===================== OTHER COMPLIANCES =====================
+    if (option === "Other Compliances") {
+      if (req.body.details) {
+        const parsedDetails = JSON.parse(req.body.details);
+
+        if (parsedDetails.name) {
+          updateFields["details.$.name"] = parsedDetails.name;
+        }
+        if (parsedDetails.date) {
+          updateFields["details.$.date"] = parsedDetails.date;
+        }
+      }
+
+      if (req.file) {
+        const fileUrl = await uploadtoS3(req.file);
+        updateFields["details.$.file"] = fileUrl;
+      }
+    }
+
+    // ===================== CONTACT DETAILS =====================
+    else if (
+      option === "KMP Contact Details" ||
+      option === "Investor Relations Contact"
+    ) {
+      const { contactInfo } = req.body;
+
+      if (!contactInfo) {
+        return res.status(400).json({
+          message: "contactInfo is required",
+        });
+      }
+
+      updateFields["details.$.contactInfo"] = contactInfo;
+    }
+
+    // ===================== INVALID OPTION =====================
+    else {
+      return res.status(400).json({ message: "Invalid option selected" });
+    }
+
+    const updated = await OtherModel.findOneAndUpdate(
+      { "details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Other entry updated successfully",
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error("Error updating Other entry:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   createOther,
   getOtherDetails,
   deleteById,
+  updateOtherById
 };

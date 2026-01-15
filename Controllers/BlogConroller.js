@@ -94,8 +94,72 @@ const deleteById = async (req, res) => {
     }
 };
 
+const updateBlog = async (req, res) => {
+    const { id } = req.params;
+    const { title, date, link, meta, excerpt, paragraph, faqs } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            message: "Blog id is required"
+        });
+    }
+
+    try {
+        const blog = await BlogModel.findById(id);
+        if (!blog) {
+            return res.status(404).json({
+                message: "Blog not found"
+            });
+        }
+
+        // Upload new image if provided
+        if (req.file) {
+            const img = await uploadtoS3(req.file, "Blogs");
+            if (!img) {
+                return res.status(500).json({
+                    message: "Error uploading image"
+                });
+            }
+            blog.img = img;
+        }
+
+        // Parse JSON fields safely
+        try {
+            if (meta) blog.meta = typeof meta === "string" ? JSON.parse(meta) : meta;
+            if (paragraph) blog.paragraph = typeof paragraph === "string" ? JSON.parse(paragraph) : paragraph;
+            if (faqs) blog.faqs = typeof faqs === "string" ? JSON.parse(faqs) : faqs;
+        } catch (err) {
+            return res.status(400).json({
+                message: "Invalid JSON in meta, paragraph, or faqs"
+            });
+        }
+
+        // Update simple fields
+        if (title) blog.title = title;
+        if (date) blog.date = date;
+        if (link) blog.link = link;
+        if (excerpt) blog.excerpt = excerpt;
+
+        const updatedBlog = await blog.save();
+
+        return res.status(200).json({
+            message: "Blog updated successfully",
+            blog: updatedBlog
+        });
+
+    } catch (error) {
+        console.error("Update blog error:", error && error.message);
+        return res.status(500).json({
+            message: "Something went wrong",
+            error: error && error.message
+        });
+    }
+};
+
+
 module.exports = {
     createBlog,
     getBlog,
     deleteById,
+    updateBlog
 };

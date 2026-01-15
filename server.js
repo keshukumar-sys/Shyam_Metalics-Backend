@@ -65,6 +65,7 @@ app.use("/stories", require("./Routes/EventStoriesRoute"));
 app.use("/blog", require("./Routes/BlogRoute"));
 app.use("/disclosure", require("./Routes/DisclosuresRoute"));
 app.use("/award", require("./Routes/AwardRoute"));
+app.use("/qip", require("./Routes/QipRoute"));
 
 // ✅ Upload routes (multer lives INSIDE these routes)
 app.use("/extra", require("./Routes/uploadRoute"));

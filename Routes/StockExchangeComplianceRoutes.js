@@ -2,7 +2,7 @@ const express = require("express");
 const {
   addComplianceDetail,
   getComplianceDetails,
-  deleteById } = require("../Controllers/StockExchangeComplianceController");
+  deleteById,updateComplianceById } = require("../Controllers/StockExchangeComplianceController");
 const upload = require('../middleware/upload.js');
 const router = express.Router();
 
@@ -17,4 +17,6 @@ router.post("/add", upload.single("file"), addComplianceDetail);
 // Get all compliance details for a selected option
 router.get("/get/:option", getComplianceDetails);
 router.delete("/delete" , deleteById);
+router.put("/update_compliance/:id", upload.single("file"), updateComplianceById);
+
 module.exports = router;

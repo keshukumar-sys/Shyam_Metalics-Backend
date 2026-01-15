@@ -81,4 +81,70 @@ const deleteById = async (req, res) => {
   }
 };
 
-module.exports = { createInvestorAnalyst, getInvestorAnalyst, deleteById };
+const updateInvestorAnalyst = async (req, res) => {
+  const { id } = req.params;
+  const { investor_analyst_name, investor_analyst_date } = req.body;
+
+  if (!id) {
+    return res.status(400).json({
+      message: "detail id is required",
+    });
+  }
+
+  try {
+    // Find parent document containing this detail
+    const parent = await InvestorAnalyst.findOne({
+      "investor_analyst_details._id": id,
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        message: "Investor/Analyst item not found",
+      });
+    }
+
+    // Build update object
+    const updateFields = {};
+    if (investor_analyst_name) {
+      updateFields["investor_analyst_details.$.investor_analyst_name"] =
+        investor_analyst_name;
+    }
+    if (investor_analyst_date) {
+      updateFields["investor_analyst_details.$.investor_analyst_date"] =
+        investor_analyst_date;
+    }
+
+    // Upload new file if provided
+    if (req.file) {
+      const fileUrl = await uploadtoS3(req.file);
+      if (!fileUrl) {
+        return res.status(500).json({
+          message: "File upload failed",
+        });
+      }
+      updateFields["investor_analyst_details.$.investor_analyst_file"] =
+        fileUrl;
+    }
+
+    const updated = await InvestorAnalyst.findOneAndUpdate(
+      { "investor_analyst_details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Investor/Analyst updated successfully",
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error("Error updating Investor/Analyst:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
+module.exports = { createInvestorAnalyst, getInvestorAnalyst, deleteById ,updateInvestorAnalyst};

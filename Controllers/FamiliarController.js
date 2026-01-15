@@ -83,4 +83,63 @@ const deleteById = async (req, res) => {
   }
 };
 
-module.exports = { createFamiliar, getFamiliar, deleteById };
+const updateFamiliar = async (req, res) => {
+  const { id } = req.params;
+  const { familiar_name, familiar_date } = req.body;
+
+  if (!id) {
+    return res.status(400).json({
+      message: "detail id is required",
+    });
+  }
+
+  try {
+    // Find parent document that contains this detail
+    const parent = await FamiliarModel.findOne({
+      "familiar_details._id": id,
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        message: "Familiar item not found",
+      });
+    }
+
+    // Build update object
+    const updateFields = {};
+    if (familiar_name) updateFields["familiar_details.$.familiar_name"] = familiar_name;
+    if (familiar_date) updateFields["familiar_details.$.familiar_date"] = familiar_date;
+
+    // Upload new file if provided
+    if (req.file) {
+      const fileUrl = await uploadtoS3(req.file);
+      if (!fileUrl) {
+        return res.status(500).json({
+          message: "File upload failed",
+        });
+      }
+      updateFields["familiar_details.$.familiar_file"] = fileUrl;
+    }
+
+    const updated = await FamiliarModel.findOneAndUpdate(
+      { "familiar_details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Familiar updated successfully",
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error("Error updating Familiar:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
+module.exports = { createFamiliar, getFamiliar, deleteById, updateFamiliar };

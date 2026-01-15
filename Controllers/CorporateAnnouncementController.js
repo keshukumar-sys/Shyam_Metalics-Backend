@@ -86,4 +86,63 @@ const deleteById = async (req, res) => {
   }
 };
 
-module.exports = { addCorporateAnnouncement, getCorporateAnnouncement, deleteById };
+
+const updateCorporateAnnouncement = async (req, res) => {
+  const { id } = req.params;
+  const { name, date } = req.body;
+
+  if (!id) {
+    return res.status(400).json({
+      message: "detail id is required"
+    });
+  }
+
+  try {
+    // Find parent document that contains this detail
+    const parent = await CorporateAnnouncementModel.findOne({
+      "details._id": id
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        message: "Announcement detail not found"
+      });
+    }
+
+    // Prepare update object
+    const updateFields = {};
+    if (name) updateFields["details.$.name"] = name;
+    if (date) updateFields["details.$.date"] = date;
+
+    // Upload new file if provided
+    if (req.file) {
+      const fileUrl = await uploadtoS3(req.file);
+      if (!fileUrl) {
+        return res.status(500).json({
+          message: "File upload failed"
+        });
+      }
+      updateFields["details.$.file"] = fileUrl;
+    }
+
+    const updated = await CorporateAnnouncementModel.findOneAndUpdate(
+      { "details._id": id },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Corporate announcement updated successfully",
+      data: updated
+    });
+
+  } catch (error) {
+    console.error("Error updating announcement:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
+  }
+};
+
+module.exports = { addCorporateAnnouncement, getCorporateAnnouncement, deleteById, updateCorporateAnnouncement };

@@ -3,6 +3,7 @@ const {
   addCorporateAnnouncement,
   getCorporateAnnouncement,
   deleteById,
+  updateCorporateAnnouncement
 } = require("../Controllers/CorporateAnnouncementController");
 const upload = require("../middleware/upload");
 
@@ -19,4 +20,6 @@ router.post("/add",upload.single("file"), addCorporateAnnouncement);
 // Get all announcement details for a specific option
 router.get("/get/:option", getCorporateAnnouncement);
 router.delete("/delete" , deleteById);
+router.put("/update_ca/:id", upload.single("file"), updateCorporateAnnouncement);
+
 module.exports = router;

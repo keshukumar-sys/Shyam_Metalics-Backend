@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true, limit: "3mb" }));
 app.use(
   cors({
     origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
@@ -66,6 +66,7 @@ app.use("/blog", require("./Routes/BlogRoute"));
 app.use("/disclosure", require("./Routes/DisclosuresRoute"));
 app.use("/award", require("./Routes/AwardRoute"));
 app.use("/qip", require("./Routes/QipRoute"));
+app.use("/jobs", require("./Routes/JobRoutes"));
 
 // ✅ Upload routes (multer lives INSIDE these routes)
 app.use("/extra", require("./Routes/uploadRoute"));
@@ -73,7 +74,7 @@ app.use("/extra", require("./Routes/uploadRoute"));
 // Auth & Logs
 app.use("/auth", require("./Routes/AuthRoutes"));
 app.use("/logs", require("./Routes/ActivityLogRoute"));
-
+app.use("/inquiries" , require("./Routes/ContactRoute"));
 /* =========================================================
    ✅ AUTH MIDDLEWARE (POST / PUT / DELETE protected)
 ========================================================= */

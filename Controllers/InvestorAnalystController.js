@@ -13,6 +13,8 @@ const createInvestorAnalyst = async (req, res) => {
       });
     }
 
+    console.log("hello inverstor anaylyst")
+
     // Upload file to S3
     const fileUrl = await uploadtoS3(req.file);
 
@@ -30,6 +32,8 @@ const createInvestorAnalyst = async (req, res) => {
       },
       { new: true, upsert: true }
     );
+
+    console.log(updatedInvestorAnalyst)
 
     res.status(201).json({
       message: "Investor/Analyst data added successfully",

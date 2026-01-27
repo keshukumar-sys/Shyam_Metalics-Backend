@@ -58,35 +58,75 @@ const deleteJob = async (req, res) => {
     }
 };
 
-// Apply to a job
-const applyJob = async (req, res) => {
-    try {
-        const { jobId, name, email, phone } = req.body;
-        const resume = req.file ? req.file.filename : "";
-        const url = await uploadToS3(req.file, "resumes");
-        const application = new JobApplication({
-            jobId,
-            name,
-            email,
-            phone,
-            resume:url,
-        });
 
-        await application.save();
-        res.status(201).json({ message: "Application submitted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: "Error applying to job", error });
+/* ---------------- Apply Job ---------------- */
+const applyJob = async (req, res) => {
+  try {
+    const data = req.body;
+
+    let resumeUrl = "";
+    if (req.file) {
+      resumeUrl = await uploadToS3(req.file, "resumes");
     }
+
+    const application = new JobApplication({
+      jobId: data.jobId,
+
+      fullName: data.fullName,
+      email: data.email,
+      mobile: data.mobile,
+      cityState: data.cityState,
+      linkedin: data.linkedin,
+
+      totalExperience: data.totalExperience,
+      currentCompany: data.currentCompany,
+      designation: data.designation,
+      department: data.department,
+      currentCTC: data.currentCTC,
+      expectedCTC: data.expectedCTC,
+      noticePeriod: data.noticePeriod,
+
+      positionAppliedFor: data.positionAppliedFor,
+      preferredLocation: data.preferredLocation,
+      employmentType: data.employmentType,
+
+      qualification: data.qualification,
+      specialization: data.specialization,
+      institute: data.institute,
+      yearOfCompletion: data.yearOfCompletion,
+
+      resume: resumeUrl,
+    });
+
+    await application.save();
+
+    res.status(201).json({
+      message: "Application submitted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Error applying to job",
+      error,
+    });
+  }
 };
+
+/* ---------------- Get Applications ---------------- */
 const getApplications = async (req, res) => {
-    try {
-        const { jobId } = req.params;
-        const apps = await JobApplication.find({ jobId });
-        res.status(200).json(apps);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching applications", error });
-    }
+  try {
+    const apps = await JobApplication.find()
+      .populate("jobId", "title location");
+
+    res.status(200).json(apps);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching applications",
+      error,
+    });
+  }
 };
+
 module.exports = {
     getAllJobs,
     addJob,

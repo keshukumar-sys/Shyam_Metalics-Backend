@@ -8,28 +8,34 @@ const {
   updateJob,
   deleteJob,
   applyJob,
-  getApplications
+  getApplications,
+  updateApplication,
+  deleteApplication,
+  getApplicationsByJobId,
+  getAllJobApplications // <-- new
 } = require("../Controllers/JobController");
 
-// Test route
+// ========================
+// EXISTING ROUTES (unchanged)
+// ========================
 router.get("/test", (req, res) => res.send("Jobs API is running"));
-
-// Get all jobs
 router.get("/all", getAllJobs);
-
-// Admin: Create a job
 router.post("/add", upload.single("img"), addJob);
-
-// Admin: Update a job
 router.put("/update/:id", upload.single("img"), updateJob);
-
-// Admin: Delete a job
-router.delete("/delete/:id",(req,res ,next)=>{
+router.delete("/delete/:id", (req, res, next) => {
   console.log("in the next route");
   next();
-} ,deleteJob);
+}, deleteJob);
 router.get("/applications/:jobId", getApplications);
-// Candidate: Apply to job
 router.post("/apply", upload.single("resume"), applyJob);
+router.get("/applications/job/:jobId", getApplicationsByJobId);
+router.put("/applications/update/:id", updateApplication);
+router.delete("/applications/delete/:id", deleteApplication);
+
+// ========================
+// NEW ADMIN ROUTE
+// ========================
+// Get all job applications for dashboard/admin
+router.get("/applications/all", getAllJobApplications);
 
 module.exports = router;

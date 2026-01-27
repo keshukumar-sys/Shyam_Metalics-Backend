@@ -111,6 +111,72 @@ const applyJob = async (req, res) => {
     });
   }
 };
+/* ---------------- Update Application ---------------- */
+const updateApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await JobApplication.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({
+        message: "Application not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Application updated successfully",
+      application: updated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error updating application",
+      error,
+    });
+  }
+};
+/* ---------------- Delete Application ---------------- */
+const deleteApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await JobApplication.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        message: "Application not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Application deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error deleting application",
+      error,
+    });
+  }
+};
+/* -------- Get Applications For One Job -------- */
+const getApplicationsByJobId = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    const apps = await JobApplication.find({ jobId });
+
+    res.status(200).json(apps);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching job applications",
+      error,
+    });
+  }
+};
 
 /* ---------------- Get Applications ---------------- */
 const getApplications = async (req, res) => {
@@ -126,12 +192,70 @@ const getApplications = async (req, res) => {
     });
   }
 };
+/* ---------------- Get All Job Applications (Admin) ---------------- */
+const getAllJobApplications = async (req, res) => {
+  try {
+    console.log("get applications called");
+    const applications = await JobApplication.find()
+      .populate("jobId", "title location salary") // populate job info
+      .sort({ createdAt: -1 }); // newest first
+    console.log(applications);
+    // Transform to clean response if needed
+    const result = applications.map(app => ({
+      id: app._id,
+      fullName: app.fullName,
+      email: app.email,
+      mobile: app.mobile,
+      cityState: app.cityState,
+      linkedin: app.linkedin,
+      totalExperience: app.totalExperience,
+      currentCompany: app.currentCompany,
+      designation: app.designation,
+      department: app.department,
+      currentCTC: app.currentCTC,
+      expectedCTC: app.expectedCTC,
+      noticePeriod: app.noticePeriod,
+      positionAppliedFor: app.positionAppliedFor,
+      preferredLocation: app.preferredLocation,
+      employmentType: app.employmentType,
+      qualification: app.qualification,
+      specialization: app.specialization,
+      institute: app.institute,
+      yearOfCompletion: app.yearOfCompletion,
+      resume: app.resume,
+      status: app.status || "Applied",
+      job: app.jobId ? {
+        id: app.jobId._id,
+        title: app.jobId.title,
+        location: app.jobId.location,
+        salary: app.jobId.salary
+      } : null,
+      appliedAt: app.createdAt
+    }));
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Error fetching all job applications",
+      error
+    });
+  }
+};
+
 
 module.exports = {
-    getAllJobs,
-    addJob,
-    updateJob,
-    deleteJob,
-    applyJob,
-    getApplications
+  getAllJobs,
+  addJob,
+  updateJob,
+  deleteJob,
+  applyJob,
+  getApplications,
+  
+  updateApplication,
+  deleteApplication,
+  getApplicationsByJobId,
+
+  getAllJobApplications  // <-- new controller
 };
+
